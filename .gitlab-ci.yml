@@ -1,0 +1,75 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+  - test
+  - docker-build
+  - deploy
+
+build-karigar:
+  stage: build
+  script:
+    - cd karigar
+    - ./gradlew build
+  artifacts:
+    paths:
+      - karigar/build/libs/*.jar
+
+build-saksatkaar:
+  stage: build
+  script:
+    - cd saksatkaar
+    - ./gradlew build
+  artifacts:
+    paths:
+      - saksatkaar/build/libs/*.jar
+
+test-karigar:
+  stage: test
+  script:
+    - cd karigar
+    - ./gradlew test
+
+test-saksatkaar:
+  stage: test
+  script:
+    - cd saksatkaar
+    - ./gradlew test
+
+docker-build-karigar:
+  stage: docker-build
+  script:
+    - cd karigar
+    - docker build -t registry.gitlab.com/your-username/karigar:latest .
+    - docker push registry.gitlab.com/your-username/karigar:latest
+  only:
+    - master
+
+docker-build-saksatkaar:
+  stage: docker-build
+  script:
+    - cd saksatkaar
+    - docker build -t registry.gitlab.com/your-username/saksatkaar:latest .
+    - docker push registry.gitlab.com/your-username/saksatkaar:latest
+  only:
+    - master
+
+deploy-karigar:
+  stage: deploy
+  script:
+    - kubectl apply -f k8s/deployment-karigar.yaml
+  only:
+    - master
+
+deploy-saksatkaar:
+  stage: deploy
+  script:
+    - kubectl apply -f k8s/deployment-saksatkaar.yaml
+  only:
+    - master

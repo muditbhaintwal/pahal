@@ -1,1 +1,3 @@
 rootProject.name = 'pahal'
+include 'karigar','saksatkaar'
+
